@@ -1,6 +1,398 @@
-<body>
-    <audio autoplay loop>
-        <source src="https://github.com/KysaInt/K2/blob/main/audio/bg.ogg" type="audio/ogg">
-        您的浏览器不支持音频播放。
-    </audio>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AYE'babylon</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* 禁用滚动 */
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+</head>
+<body style="background-color: black;"> <!-- 设置初始背景为黑色 -->
+    <canvas id="renderCanvas" style="width: 100vw; height: 100vh;"></canvas>
+    <div id="uiContainer" style="position: absolute; top: 10px; right: 10px; width: 250px; background-color: rgba(0, 0, 0, 0.7); color: white; font-family: Arial, sans-serif; font-size: 14px; padding: 10px; border-radius: 8px; z-index: 10;">
+        <h3 style="margin: 0 0 10px; font-size: 16px; text-align: center;">Controls</h3>
+        <label for="lightIntensity">Light Intensity:</label>
+        <div style="display: flex; align-items: center;">
+            <input id="lightIntensity" type="range" min="0" max="2" step="0.1" value="0.8" style="flex: 1; margin-right: 10px;">
+            <input id="lightIntensityValue" type="number" min="0" max="2" step="0.1" value="0.8" style="width: 50px;">
+        </div>
+        <label for="aoStrength">AO Strength:</label>
+        <div style="display: flex; align-items: center;">
+            <input id="aoStrength" type="range" min="0" max="2" step="0.1" value="1.0" style="flex: 1; margin-right: 10px;">
+            <input id="aoStrengthValue" type="number" min="0" max="2" step="0.1" value="1.0" style="width: 50px;">
+        </div>
+        <label for="cameraZoom">Camera Zoom:</label>
+        <div style="display: flex; align-items: center;">
+            <input id="cameraZoom" type="range" min="1" max="10" step="0.1" value="2.5" style="flex: 1; margin-right: 10px;">
+            <input id="cameraZoomValue" type="number" min="1" max="10" step="0.1" value="2.5" style="width: 50px;">
+        </div>
+        <label for="blurKernel">Blur Kernel:</label>
+        <div style="display: flex; align-items: center;">
+            <input id="blurKernel" type="range" min="1" max="64" step="1" value="32" style="flex: 1; margin-right: 10px;">
+            <input id="blurKernelValue" type="number" min="1" max="64" step="1" value="32" style="width: 50px;">
+        </div>
+        <label for="glowIntensity">Glow Intensity:</label>
+        <div style="display: flex; align-items: center;">
+            <input id="glowIntensity" type="range" min="0" max="2" step="0.1" value="0.5" style="flex: 1; margin-right: 10px;">
+            <input id="glowIntensityValue" type="number" min="0" max="2" step="0.1" value="0.5" style="width: 50px;">
+        </div>
+        <label for="cameraFov">Camera FOV:</label>
+        <div style="display: flex; align-items: center;">
+            <input id="cameraFov" type="range" min="0.1" max="3.14" step="0.01" value="1.5" style="flex: 1; margin-right: 10px;">
+            <input id="cameraFovValue" type="number" min="0.1" max="3.14" step="0.01" value="1.5" style="width: 50px;">
+        </div>
+        <label for="shadowDarkness">Shadow Darkness:</label>
+        <div style="display: flex; align-items: center;">
+            <input id="shadowDarkness" type="range" min="0" max="1" step="0.1" value="0.5" style="flex: 1; margin-right: 10px;">
+            <input id="shadowDarknessValue" type="number" min="0" max="1" step="0.1" value="0.5" style="width: 50px;">
+        </div>
+        <button id="toggleMaterials" style="margin-top: 10px; width: 100%; padding: 5px; background-color: #444; color: white; border: none; border-radius: 4px; cursor: pointer;">Toggle Materials</button>
+        <div id="materialsContainer" style="margin-top: 10px;">
+            <h4 style="margin: 0 0 10px; font-size: 14px;">Material Parameters</h4>
+            <div id="materialList"></div>
+        </div>
+        <div id="materialControls" style="display: none;">
+            <h4 style="margin: 0 0 10px; font-size: 14px;">Active Material</h4>
+            <label for="materialAlbedo">Albedo:</label>
+            <input id="materialAlbedo" type="color" style="width: 100%; margin-bottom: 10px;">
+            <label for="materialMetallic">Metallic:</label>
+            <div style="display: flex; align-items: center;">
+                <input id="materialMetallic" type="range" min="0" max="1" step="0.01" value="0.5" style="flex: 1; margin-right: 10px;">
+                <input id="materialMetallicValue" type="number" min="0" max="1" step="0.01" value="0.5" style="width: 50px;">
+            </div>
+            <label for="materialRoughness">Roughness:</label>
+            <div style="display: flex; align-items: center;">
+                <input id="materialRoughness" type="range" min="0" max="1" step="0.01" value="0.5" style="flex: 1; margin-right: 10px;">
+                <input id="materialRoughnessValue" type="number" min="0" max="1" step="0.01" value="0.5" style="width: 50px;">
+            </div>
+            <label for="materialEmissive">Emissive:</label>
+            <input id="materialEmissive" type="color" style="width: 100%; margin-bottom: 10px;">
+        </div>
+    </div>
+    <div id="materialUIContainer" style="position: absolute; top: 10px; left: 10px; width: 250px; background-color: rgba(0, 0, 0, 0.7); color: white; font-family: Arial, sans-serif; font-size: 14px; padding: 10px; border-radius: 8px; z-index: 10;">
+        <h3 style="margin: 0 0 10px; font-size: 16px; text-align: center;">Material Info</h3>
+        <div id="glbMaterialList"></div>
+    </div>
+    <script>
+        const canvas = document.getElementById("renderCanvas");
+        const engine = new BABYLON.Engine(canvas, true);
+
+        const createScene = () => {
+            const scene = new BABYLON.Scene(engine);
+
+            // 设置背景颜色为纯黑
+            scene.clearColor = new BABYLON.Color4(0, 0, 0, 1);
+
+            // 添加相机并确保目标居中
+            const camera = new BABYLON.ArcRotateCamera("Camera", Math.PI / 2, -Math.PI, 1.5, BABYLON.Vector3.Zero(), scene);
+            camera.attachControl(canvas, true);
+
+            // 设置鼠标滚轮缩放速度为当前的 1/10
+            camera.wheelDeltaPercentage = 0.01;
+
+            // 添加面片灯光
+            const light = new BABYLON.HemisphericLight("hemisphericLight", new BABYLON.Vector3(0, 1, 0), scene);
+            light.intensity = 0.8; // 调整灯光强度
+
+            // 更换 HDR 环境贴图
+            const hdrTexture = BABYLON.CubeTexture.CreateFromPrefilteredData("https://playground.babylonjs.com/textures/environment.env", scene);
+            scene.environmentTexture = hdrTexture;
+            scene.createDefaultSkybox(hdrTexture, true, 1000);
+
+            // 手动将 skybox 的材质添加到材质列表
+            const skybox = scene.getMeshByName("SkyBox");
+            if (skybox && skybox.material) {
+                scene.materials.push(skybox.material);
+            }
+
+            // 添加 AO（环境光遮蔽）效果
+            const ao = new BABYLON.DefaultRenderingPipeline("defaultPipeline", true, scene, [camera]);
+            ao.imageProcessingEnabled = true;
+            ao.imageProcessing.contrast = 1.6; // 调整对比度
+            ao.imageProcessing.exposure = 1.2; // 调整曝光
+            ao.ssaoEnabled = true; // 启用 SSAO
+            ao.ssaoRadius = 0.1; // 设置 AO 半径
+            ao.ssaoStrength = 1.0; // 设置 AO 强度
+
+            // 添加辉光效果
+            const glowLayer = new BABYLON.GlowLayer("glow", scene);
+            glowLayer.intensity = 0.5;
+
+            // 添加聚光灯用于阴影
+            const spotLight = new BABYLON.SpotLight("spotLight", new BABYLON.Vector3(0, 10, 0), new BABYLON.Vector3(0, -1, 0), Math.PI / 3, 2, scene);
+            spotLight.intensity = 1.5;
+
+            // 创建阴影生成器
+            const shadowGenerator = new BABYLON.ShadowGenerator(1024, spotLight);
+            shadowGenerator.useBlurExponentialShadowMap = true; // 启用高级阴影
+            shadowGenerator.blurKernel = 32; // 调整模糊程度
+            shadowGenerator.setDarkness(0.5); // 设置阴影暗度
+
+            // 加载 .glb 模型
+            BABYLON.SceneLoader.Append("models/", "modelSB.glb", scene, function () {
+                console.log("模型加载完成！");
+
+                // 放大模型 10 倍并启用阴影
+                scene.meshes.forEach(mesh => {
+                    if (mesh.name !== "__root__") { // 排除根节点
+                        mesh.scaling = new BABYLON.Vector3(10, 10, 10);
+                        shadowGenerator.addShadowCaster(mesh); // 启用阴影
+                        mesh.receiveShadows = true; // 接收阴影
+                    }
+                });
+
+                // 自动调整相机缩放以适配物体
+                scene.executeWhenReady(() => {
+                    const boundingInfo = scene.getMeshByName("modelSB").getBoundingInfo();
+                    const radius = boundingInfo.boundingSphere.radius;
+                    camera.radius = radius * 2.5; // 根据物体大小调整相机距离
+
+                    // 添加圆盘底板
+                    const disc = BABYLON.MeshBuilder.CreateDisc("baseDisc", { radius: radius * 1.2, tessellation: 64 }, scene);
+                    disc.position.y = boundingInfo.boundingBox.minimumWorld.y - 0.1; // 放置在模型底部稍微偏下
+                    const discMaterial = new BABYLON.StandardMaterial("discMaterial", scene);
+                    discMaterial.diffuseColor = new BABYLON.Color3(0.5, 0.5, 0.5); // 设置为灰色
+                    disc.material = discMaterial;
+                    disc.receiveShadows = true; // 圆盘接收阴影
+                });
+
+                // 自动生成材质列表
+                const materialList = document.getElementById("materialList");
+                scene.materials.forEach((material, index) => {
+                    const materialDiv = document.createElement("div");
+                    materialDiv.style.marginBottom = "10px";
+                    materialDiv.innerHTML = `
+                        <strong>Material ${index + 1}: ${material.name}</strong>
+                        <label for="materialAlbedo${index}">Albedo:</label>
+                        <input id="materialAlbedo${index}" type="color" value="#${material.albedoColor.toHexString().slice(1)}" style="width: 100%; margin-bottom: 5px;">
+                        <label for="materialMetallic${index}">Metallic:</label>
+                        <div style="display: flex; align-items: center; margin-bottom: 5px;">
+                            <input id="materialMetallic${index}" type="range" min="0" max="1" step="0.01" value="${material.metallic}" style="flex: 1; margin-right: 10px;">
+                            <input id="materialMetallicValue${index}" type="number" min="0" max="1" step="0.01" value="${material.metallic}" style="width: 50px;">
+                        </div>
+                        <label for="materialRoughness${index}">Roughness:</label>
+                        <div style="display: flex; align-items: center; margin-bottom: 5px;">
+                            <input id="materialRoughness${index}" type="range" min="0" max="1" step="0.01" value="${material.roughness}" style="flex: 1; margin-right: 10px;">
+                            <input id="materialRoughnessValue${index}" type="number" min="0" max="1" step="0.01" value="${material.roughness}" style="width: 50px;">
+                        </div>
+                        <label for="materialEmissive${index}">Emissive:</label>
+                        <input id="materialEmissive${index}" type="color" value="#${material.emissiveColor.toHexString().slice(1)}" style="width: 100%; margin-bottom: 10px;">
+                    `;
+                    materialList.appendChild(materialDiv);
+
+                    // 绑定材质参数调整事件
+                    document.getElementById(`materialAlbedo${index}`).addEventListener("input", (event) => {
+                        material.albedoColor = BABYLON.Color3.FromHexString(event.target.value);
+                    });
+
+                    const bindSliderWithInput = (sliderId, inputId, callback) => {
+                        const slider = document.getElementById(sliderId);
+                        const input = document.getElementById(inputId);
+                        slider.addEventListener("input", (event) => {
+                            const value = parseFloat(event.target.value);
+                            input.value = value;
+                            callback(value);
+                        });
+                        input.addEventListener("input", (event) => {
+                            const value = parseFloat(event.target.value);
+                            slider.value = value;
+                            callback(value);
+                        });
+                    };
+
+                    bindSliderWithInput(`materialMetallic${index}`, `materialMetallicValue${index}`, (value) => {
+                        material.metallic = value;
+                    });
+
+                    bindSliderWithInput(`materialRoughness${index}`, `materialRoughnessValue${index}`, (value) => {
+                        material.roughness = value;
+                    });
+
+                    document.getElementById(`materialEmissive${index}`).addEventListener("input", (event) => {
+                        material.emissiveColor = BABYLON.Color3.FromHexString(event.target.value);
+                    });
+                });
+
+                // 在左侧展示 GLB 模型的材质信息
+                const glbMaterialList = document.getElementById("glbMaterialList");
+                scene.materials.forEach((material, index) => {
+                    const materialDiv = document.createElement("div");
+                    materialDiv.style.marginBottom = "10px";
+                    materialDiv.innerHTML = `
+                        <strong>Material ${index + 1}: ${material.name}</strong>
+                        <label for="glbMaterialAlbedo${index}">Albedo:</label>
+                        <input id="glbMaterialAlbedo${index}" type="color" value="#${material.albedoColor.toHexString().slice(1)}" style="width: 100%; margin-bottom: 5px;">
+                        <label for="glbMaterialMetallic${index}">Metallic:</label>
+                        <div style="display: flex; align-items: center; margin-bottom: 5px;">
+                            <input id="glbMaterialMetallic${index}" type="range" min="0" max="1" step="0.01" value="${material.metallic}" style="flex: 1; margin-right: 10px;">
+                            <input id="glbMaterialMetallicValue${index}" type="number" min="0" max="1" step="0.01" value="${material.metallic}" style="width: 50px;">
+                        </div>
+                        <label for="glbMaterialRoughness${index}">Roughness:</label>
+                        <div style="display: flex; align-items: center; margin-bottom: 5px;">
+                            <input id="glbMaterialRoughness${index}" type="range" min="0" max="1" step="0.01" value="${material.roughness}" style="flex: 1; margin-right: 10px;">
+                            <input id="glbMaterialRoughnessValue${index}" type="number" min="0" max="1" step="0.01" value="${material.roughness}" style="width: 50px;">
+                        </div>
+                        <label for="glbMaterialEmissive${index}">Emissive:</label>
+                        <input id="glbMaterialEmissive${index}" type="color" value="#${material.emissiveColor.toHexString().slice(1)}" style="width: 100%; margin-bottom: 10px;">
+                    `;
+                    glbMaterialList.appendChild(materialDiv);
+
+                    // 绑定材质参数调整事件
+                    document.getElementById(`glbMaterialAlbedo${index}`).addEventListener("input", (event) => {
+                        material.albedoColor = BABYLON.Color3.FromHexString(event.target.value);
+                    });
+
+                    const bindSliderWithInput = (sliderId, inputId, callback) => {
+                        const slider = document.getElementById(sliderId);
+                        const input = document.getElementById(inputId);
+                        slider.addEventListener("input", (event) => {
+                            const value = parseFloat(event.target.value);
+                            input.value = value;
+                            callback(value);
+                        });
+                        input.addEventListener("input", (event) => {
+                            const value = parseFloat(event.target.value);
+                            slider.value = value;
+                            callback(value);
+                        });
+                    };
+
+                    bindSliderWithInput(`glbMaterialMetallic${index}`, `glbMaterialMetallicValue${index}`, (value) => {
+                        material.metallic = value;
+                    });
+
+                    bindSliderWithInput(`glbMaterialRoughness${index}`, `glbMaterialRoughnessValue${index}`, (value) => {
+                        material.roughness = value;
+                    });
+
+                    document.getElementById(`glbMaterialEmissive${index}`).addEventListener("input", (event) => {
+                        material.emissiveColor = BABYLON.Color3.FromHexString(event.target.value);
+                    });
+                });
+            });
+
+            return { scene, light, ao, glowLayer, shadowGenerator, camera };
+        };
+
+        const { scene, light, ao, glowLayer, shadowGenerator, camera } = createScene();
+
+        // 确保 canvas 填充整个屏幕
+        const resizeCanvas = () => {
+            canvas.style.width = "100vw";
+            canvas.style.height = "100vh";
+            engine.resize();
+        };
+
+        // 监听窗口尺寸变化
+        window.addEventListener("resize", resizeCanvas);
+
+        // 初始化时调整 canvas 尺寸
+        resizeCanvas();
+
+        // 启动渲染循环
+        engine.runRenderLoop(() => {
+            scene.render();
+        });
+
+        // UI 控制逻辑
+        const bindSliderWithInput = (sliderId, inputId, callback) => {
+            const slider = document.getElementById(sliderId);
+            const input = document.getElementById(inputId);
+            slider.addEventListener("input", (event) => {
+                input.value = event.target.value;
+                callback(parseFloat(event.target.value));
+            });
+            input.addEventListener("input", (event) => {
+                slider.value = event.target.value;
+                callback(parseFloat(event.target.value));
+            });
+        };
+
+        bindSliderWithInput("lightIntensity", "lightIntensityValue", (value) => {
+            light.intensity = value;
+        });
+
+        bindSliderWithInput("aoStrength", "aoStrengthValue", (value) => {
+            ao.ssaoStrength = value;
+        });
+
+        bindSliderWithInput("cameraZoom", "cameraZoomValue", (value) => {
+            camera.radius = value;
+        });
+
+        bindSliderWithInput("blurKernel", "blurKernelValue", (value) => {
+            shadowGenerator.blurKernel = value;
+        });
+
+        bindSliderWithInput("glowIntensity", "glowIntensityValue", (value) => {
+            glowLayer.intensity = value;
+        });
+
+        bindSliderWithInput("cameraFov", "cameraFovValue", (value) => {
+            camera.fov = value;
+        });
+
+        bindSliderWithInput("shadowDarkness", "shadowDarknessValue", (value) => {
+            shadowGenerator.setDarkness(value);
+        });
+
+        // 更新材质 UI
+        const updateMaterialUI = (material) => {
+            document.getElementById("materialControls").style.display = "block";
+            document.getElementById("materialAlbedo").value = `#${material.albedoColor.toHexString().slice(1)}`;
+            document.getElementById("materialMetallic").value = material.metallic;
+            document.getElementById("materialMetallicValue").value = material.metallic;
+            document.getElementById("materialRoughness").value = material.roughness;
+            document.getElementById("materialRoughnessValue").value = material.roughness;
+            document.getElementById("materialEmissive").value = `#${material.emissiveColor.toHexString().slice(1)}`;
+        };
+
+        // 绑定材质参数调整事件
+        const bindMaterialControl = (controlId, valueId, callback) => {
+            const control = document.getElementById(controlId);
+            const valueInput = document.getElementById(valueId);
+            control.addEventListener("input", (event) => {
+                const value = parseFloat(event.target.value);
+                valueInput.value = value;
+                callback(value);
+            });
+            valueInput.addEventListener("input", (event) => {
+                const value = parseFloat(event.target.value);
+                control.value = value;
+                callback(value);
+            });
+        };
+
+        bindMaterialControl("materialMetallic", "materialMetallicValue", (value) => {
+            if (activeMaterial) activeMaterial.metallic = value;
+        });
+
+        bindMaterialControl("materialRoughness", "materialRoughnessValue", (value) => {
+            if (activeMaterial) activeMaterial.roughness = value;
+        });
+
+        document.getElementById("materialAlbedo").addEventListener("input", (event) => {
+            if (activeMaterial) activeMaterial.albedoColor = BABYLON.Color3.FromHexString(event.target.value);
+        });
+
+        document.getElementById("materialEmissive").addEventListener("input", (event) => {
+            if (activeMaterial) activeMaterial.emissiveColor = BABYLON.Color3.FromHexString(event.target.value);
+        });
+
+        // 切换材质列表显示
+        document.getElementById("toggleMaterials").addEventListener("click", () => {
+            const materialsContainer = document.getElementById("materialsContainer");
+            materialsContainer.style.display = materialsContainer.style.display === "none" ? "block" : "none";
+        });
+    </script>
 </body>
+</html>
